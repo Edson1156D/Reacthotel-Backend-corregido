@@ -10,8 +10,8 @@ info:
     toda ruta de coleccion debe responder con y sin barra final; todos los errores son {"detail": "mensaje"}; los
     PUT son parciales (ausente = no cambia, null explicito en campo opcional = se borra).'
 servers:
-- url: http://localhost:8080
-  description: Local (ajusta el puerto)
+- url: http://localhost:8083
+  description: Local
 tags:
 - name: Auth
 - name: Usuarios
