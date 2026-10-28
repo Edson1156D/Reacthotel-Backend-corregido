@@ -1,0 +1,1277 @@
+openapi: 3.0.3
+info:
+  title: Hotel API
+  version: 1.0.0
+  description: 'Contrato del backend del front Reacthotel. Contiene SOLO los 29 endpoints que el front consume (src/api/auth.js
+    y src/api/services.js). No hay GET por id, registro de usuarios, paginacion ni filtros.
+
+
+    Reglas generales: JSON en snake_case; todas las rutas exigen JWT (Authorization: Bearer) salvo /auth/login;
+    toda ruta de coleccion debe responder con y sin barra final; todos los errores son {"detail": "mensaje"}; los
+    PUT son parciales (ausente = no cambia, null explicito en campo opcional = se borra).'
+servers:
+- url: http://localhost:8080
+  description: Local (ajusta el puerto)
+tags:
+- name: Auth
+- name: Usuarios
+- name: Clientes
+- name: TiposHabitacion
+- name: Habitaciones
+- name: Reservas
+- name: Facturas
+- name: Mantenimientos
+security:
+- bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags:
+      - Auth
+      operationId: login
+      summary: Iniciar sesion
+      description: 'Lo usa: Login (src/api/auth.js). Unico endpoint publico. Un usuario con activo=false tambien
+        recibe 401.'
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Token JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Credenciales incorrectas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: Credenciales incorrectas
+  /usuarios/:
+    get:
+      tags:
+      - Usuarios
+      operationId: getUsuarios
+      summary: Listar usuarios
+      description: 'Lo usa: Usuarios y Mantenimientos (este ultimo filtra rol MANTENIMIENTO en el front). Lista
+        completa, sin paginacion. La ruta tambien debe responder sin la barra final.'
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Usuarios
+      operationId: createUsuario
+      summary: Crear usuario
+      description: 'Lo usa: Usuarios. rol por defecto RECEPCION, activo por defecto true. Email repetido: 409.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioCreate'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /usuarios/{id}:
+    put:
+      tags:
+      - Usuarios
+      operationId: updateUsuario
+      summary: Actualizar usuario (parcial)
+      description: 'Lo usa: Usuarios. Sin password. Email de otro usuario: 409.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioUpdate'
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - Usuarios
+      operationId: deleteUsuario
+      summary: Eliminar usuario
+      description: 'Lo usa: Usuarios. 409 si el usuario tiene mantenimientos asignados.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Eliminado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /clientes/:
+    get:
+      tags:
+      - Clientes
+      operationId: getClientes
+      summary: Listar clientes
+      description: 'Lo usa: Clientes, Reservas, Facturas. Lista completa, sin paginacion. La ruta tambien debe responder
+        sin la barra final.'
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cliente'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Clientes
+      operationId: createCliente
+      summary: Crear cliente
+      description: 'Lo usa: Clientes.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteCreate'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /clientes/{id}:
+    put:
+      tags:
+      - Clientes
+      operationId: updateCliente
+      summary: Actualizar cliente (parcial)
+      description: 'Lo usa: Clientes.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteUpdate'
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - Clientes
+      operationId: deleteCliente
+      summary: Eliminar cliente
+      description: 'Lo usa: Clientes. 409 si el cliente tiene reservas.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Eliminado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tipos-habitacion/:
+    get:
+      tags:
+      - TiposHabitacion
+      operationId: getTiposHabitacion
+      summary: Listar tiposhabitacion
+      description: 'Lo usa: Tipos de habitacion, Habitaciones. Lista completa, sin paginacion. La ruta tambien debe
+        responder sin la barra final.'
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TipoHabitacion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - TiposHabitacion
+      operationId: createTipoHabitacion
+      summary: Crear tipohabitacion
+      description: 'Lo usa: Tipos de habitacion.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TipoHabitacionCreate'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TipoHabitacion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /tipos-habitacion/{id}:
+    put:
+      tags:
+      - TiposHabitacion
+      operationId: updateTipoHabitacion
+      summary: Actualizar tipohabitacion (parcial)
+      description: 'Lo usa: Tipos de habitacion.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TipoHabitacionUpdate'
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TipoHabitacion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - TiposHabitacion
+      operationId: deleteTipoHabitacion
+      summary: Eliminar tipohabitacion
+      description: 'Lo usa: Tipos de habitacion. 409 si existen habitaciones de ese tipo.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Eliminado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /habitaciones/:
+    get:
+      tags:
+      - Habitaciones
+      operationId: getHabitaciones
+      summary: Listar habitaciones
+      description: 'Lo usa: Habitaciones, Reservas, Facturas, Mantenimientos. Cada item incluye el objeto tipo completo..
+        Lista completa, sin paginacion. La ruta tambien debe responder sin la barra final.'
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Habitacion'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Habitaciones
+      operationId: createHabitacion
+      summary: Crear habitacion
+      description: 'Lo usa: Habitaciones. estado por defecto LIBRE. tipo_id inexistente: 404.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitacionCreate'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habitacion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /habitaciones/{id}:
+    put:
+      tags:
+      - Habitaciones
+      operationId: updateHabitacion
+      summary: Actualizar habitacion (parcial)
+      description: 'Lo usa: Habitaciones, Reservas (estado OCUPADA/LIBRE) y Facturas (estado LIBRE). Puede llegar
+        solo {estado}.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitacionUpdate'
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habitacion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - Habitaciones
+      operationId: deleteHabitacion
+      summary: Eliminar habitacion
+      description: 'Lo usa: Habitaciones. 409 si tiene reservas o mantenimientos.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Eliminado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /reservas/:
+    get:
+      tags:
+      - Reservas
+      operationId: getReservas
+      summary: Listar reservas
+      description: 'Lo usa: Reservas, Facturas. Lista completa, sin paginacion. La ruta tambien debe responder sin
+        la barra final.'
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reserva'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Reservas
+      operationId: createReserva
+      summary: Crear reserva
+      description: 'Lo usa: Reservas. Estado inicial PENDIENTE. 400 si fecha_salida <= fecha_entrada. 409 si se
+        solapa con otra reserva activa de la misma habitacion (activa = no CANCELADA ni COMPLETADA).'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaCreate'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /reservas/{id}:
+    put:
+      tags:
+      - Reservas
+      operationId: updateReserva
+      summary: Actualizar reserva (parcial)
+      description: 'Lo usa: Reservas (modal de edicion, autoconfirmacion con {estado}) y Facturas ({estado} COMPLETADA
+        o CANCELADA).'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaUpdate'
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - Reservas
+      operationId: deleteReserva
+      summary: Eliminar reserva
+      description: 'Lo usa: Reservas. 409 si tiene facturas.'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Eliminado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /facturas/:
+    get:
+      tags:
+      - Facturas
+      operationId: getFacturas
+      summary: Listar facturas
+      description: 'Lo usa: Facturas. Lista completa, sin paginacion. La ruta tambien debe responder sin la barra
+        final.'
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Factura'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Facturas
+      operationId: createFactura
+      summary: Crear factura
+      description: 'Lo usa: Facturas. La reserva debe existir (404) y estar CONFIRMADA (400), y no tener otra factura
+        distinta de ANULADA (409). total lo calcula el backend. Estado inicial PENDIENTE.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacturaCreate'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Factura'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /facturas/{id}:
+    put:
+      tags:
+      - Facturas
+      operationId: updateFactura
+      summary: Actualizar factura (parcial)
+      description: 'Lo usa: Facturas (PAGADA o ANULADA).'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacturaUpdate'
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Factura'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - Facturas
+      operationId: deleteFactura
+      summary: Eliminar factura
+      description: 'Lo usa: Facturas (borrado de emergencia, fisico).'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Eliminado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /mantenimientos/:
+    get:
+      tags:
+      - Mantenimientos
+      operationId: getMantenimientos
+      summary: Listar mantenimientos
+      description: 'Lo usa: Mantenimientos. Lista completa, sin paginacion. La ruta tambien debe responder sin la
+        barra final.'
+      responses:
+        '200':
+          description: Lista
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Mantenimiento'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Mantenimientos
+      operationId: createMantenimiento
+      summary: Crear mantenimiento
+      description: 'Lo usa: Mantenimientos. La habitacion debe existir (404); usuario_id, si viene, debe ser rol
+        MANTENIMIENTO (400); la habitacion no puede tener otro mantenimiento con resuelto=false (409). Inicia con
+        resuelto=false y fecha_fin=null.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MantenimientoCreate'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /mantenimientos/{id}:
+    put:
+      tags:
+      - Mantenimientos
+      operationId: updateMantenimiento
+      summary: Actualizar mantenimiento (parcial)
+      description: 'Lo usa: Mantenimientos (editar orden y marcar como lista).'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MantenimientoUpdate'
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mantenimiento'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags:
+      - Mantenimientos
+      operationId: deleteMantenimiento
+      summary: Eliminar mantenimiento
+      description: 'Lo usa: Mantenimientos (caso extremo).'
+      parameters:
+      - $ref: '#/components/parameters/id'
+      responses:
+        '204':
+          description: Eliminado
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    BadRequest:
+      description: Datos invalidos (validacion o regla de negocio)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: 'campo: mensaje'
+    Unauthorized:
+      description: Sin token, token invalido o vencido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: No autenticado
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: Recurso no encontrado
+    Conflict:
+      description: 'Conflicto: duplicado, solapamiento o registro relacionado con otros datos'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: No se puede completar la operacion
+  schemas:
+    Error:
+      type: object
+      description: Formato unico de error. El front lee error.response.data.detail y espera un string.
+      required:
+      - detail
+      properties:
+        detail:
+          type: string
+          example: Mensaje de error en espanol
+    LoginRequest:
+      type: object
+      required:
+      - email
+      - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@hotel.com
+        password:
+          type: string
+          format: password
+    LoginResponse:
+      type: object
+      required:
+      - access_token
+      - token_type
+      properties:
+        access_token:
+          type: string
+          description: JWT. El front lo guarda en localStorage y lo envia como Bearer.
+        token_type:
+          type: string
+          example: bearer
+    Rol:
+      type: string
+      enum:
+      - ADMIN
+      - RECEPCION
+      - MANTENIMIENTO
+    EstadoHabitacion:
+      type: string
+      enum:
+      - LIBRE
+      - OCUPADA
+      - RESERVADA
+      - MANTENIMIENTO
+    EstadoReserva:
+      type: string
+      enum:
+      - PENDIENTE
+      - CONFIRMADA
+      - CANCELADA
+      - COMPLETADA
+    EstadoFactura:
+      type: string
+      enum:
+      - PENDIENTE
+      - PAGADA
+      - ANULADA
+    UsuarioCreate:
+      type: object
+      required:
+      - nombre
+      - email
+      - password
+      properties:
+        nombre:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          description: Solo al crear. Se guarda con BCrypt.
+        rol:
+          allOf:
+          - $ref: '#/components/schemas/Rol'
+          default: RECEPCION
+        activo:
+          type: boolean
+          default: true
+    UsuarioUpdate:
+      type: object
+      description: Parcial. NO incluye password.
+      properties:
+        nombre:
+          type: string
+        email:
+          type: string
+          format: email
+        rol:
+          $ref: '#/components/schemas/Rol'
+        activo:
+          type: boolean
+    Usuario:
+      type: object
+      required:
+      - id
+      - nombre
+      - email
+      - rol
+      - activo
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        email:
+          type: string
+          format: email
+        rol:
+          $ref: '#/components/schemas/Rol'
+        activo:
+          type: boolean
+    ClienteCreate:
+      type: object
+      required:
+      - nombre
+      - apellido
+      - dni
+      properties:
+        nombre:
+          type: string
+        apellido:
+          type: string
+        dni:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        telefono:
+          type: string
+          nullable: true
+        direccion:
+          type: string
+          nullable: true
+    ClienteUpdate:
+      type: object
+      description: Parcial.
+      properties:
+        nombre:
+          type: string
+        apellido:
+          type: string
+        dni:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        telefono:
+          type: string
+          nullable: true
+        direccion:
+          type: string
+          nullable: true
+    Cliente:
+      type: object
+      required:
+      - id
+      - nombre
+      - apellido
+      - dni
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        apellido:
+          type: string
+        dni:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        telefono:
+          type: string
+          nullable: true
+        direccion:
+          type: string
+          nullable: true
+    TipoHabitacionCreate:
+      type: object
+      required:
+      - nombre
+      - precio_noche
+      - capacidad
+      properties:
+        nombre:
+          type: string
+          example: Suite
+        descripcion:
+          type: string
+          nullable: true
+        precio_noche:
+          type: number
+          format: double
+          minimum: 0
+          example: 150.0
+        capacidad:
+          type: integer
+          minimum: 1
+          example: 2
+        imagen_url:
+          type: string
+          nullable: true
+          description: Solo texto con una URL. Si falta, el front muestra una imagen por defecto.
+    TipoHabitacionUpdate:
+      type: object
+      description: Parcial.
+      properties:
+        nombre:
+          type: string
+          example: Suite
+        descripcion:
+          type: string
+          nullable: true
+        precio_noche:
+          type: number
+          format: double
+          minimum: 0
+          example: 150.0
+        capacidad:
+          type: integer
+          minimum: 1
+          example: 2
+        imagen_url:
+          type: string
+          nullable: true
+          description: Solo texto con una URL. Si falta, el front muestra una imagen por defecto.
+    TipoHabitacion:
+      type: object
+      required:
+      - id
+      - nombre
+      - precio_noche
+      - capacidad
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+          example: Suite
+        descripcion:
+          type: string
+          nullable: true
+        precio_noche:
+          type: number
+          format: double
+          minimum: 0
+          example: 150.0
+        capacidad:
+          type: integer
+          minimum: 1
+          example: 2
+        imagen_url:
+          type: string
+          nullable: true
+          description: Solo texto con una URL. Si falta, el front muestra una imagen por defecto.
+    HabitacionCreate:
+      type: object
+      required:
+      - numero
+      - tipo_id
+      properties:
+        numero:
+          type: string
+          example: '101'
+        piso:
+          type: integer
+          nullable: true
+        descripcion:
+          type: string
+          nullable: true
+        tipo_id:
+          type: integer
+          format: int64
+        estado:
+          allOf:
+          - $ref: '#/components/schemas/EstadoHabitacion'
+          default: LIBRE
+    HabitacionUpdate:
+      type: object
+      description: 'Parcial: campo ausente = no cambia; null explicito en campos opcionales (piso, descripcion)
+        = se borra. El front tambien envia solo {estado}.'
+      properties:
+        numero:
+          type: string
+          example: '101'
+        piso:
+          type: integer
+          nullable: true
+        descripcion:
+          type: string
+          nullable: true
+        tipo_id:
+          type: integer
+          format: int64
+        estado:
+          $ref: '#/components/schemas/EstadoHabitacion'
+    Habitacion:
+      type: object
+      required:
+      - id
+      - numero
+      - estado
+      - tipo
+      properties:
+        id:
+          type: integer
+          format: int64
+        numero:
+          type: string
+          example: '101'
+        piso:
+          type: integer
+          nullable: true
+        descripcion:
+          type: string
+          nullable: true
+        estado:
+          $ref: '#/components/schemas/EstadoHabitacion'
+        tipo:
+          $ref: '#/components/schemas/TipoHabitacion'
+    ReservaCreate:
+      type: object
+      required:
+      - cliente_id
+      - habitacion_id
+      - fecha_entrada
+      - fecha_salida
+      properties:
+        cliente_id:
+          type: integer
+          format: int64
+        habitacion_id:
+          type: integer
+          format: int64
+        fecha_entrada:
+          type: string
+          format: date
+          example: '2026-10-26'
+        fecha_salida:
+          type: string
+          format: date
+          example: '2026-10-26'
+        observaciones:
+          type: string
+          nullable: true
+    ReservaUpdate:
+      type: object
+      description: Parcial. cliente_id no se puede cambiar. El front envia {estado} solo, o los 5 campos desde el
+        modal de edicion. Las validaciones de fechas y solapamiento aplican solo si el body trae habitacion_id,
+        fecha_entrada o fecha_salida.
+      properties:
+        habitacion_id:
+          type: integer
+          format: int64
+        fecha_entrada:
+          type: string
+          format: date
+          example: '2026-10-26'
+        fecha_salida:
+          type: string
+          format: date
+          example: '2026-10-26'
+        observaciones:
+          type: string
+          nullable: true
+        estado:
+          $ref: '#/components/schemas/EstadoReserva'
+    Reserva:
+      type: object
+      description: Respuesta plana (solo ids). El front lee r.cliente_id y r.habitacion_id.
+      required:
+      - id
+      - cliente_id
+      - habitacion_id
+      - fecha_entrada
+      - fecha_salida
+      - estado
+      properties:
+        id:
+          type: integer
+          format: int64
+        cliente_id:
+          type: integer
+          format: int64
+        habitacion_id:
+          type: integer
+          format: int64
+        fecha_entrada:
+          type: string
+          format: date
+          example: '2026-10-26'
+        fecha_salida:
+          type: string
+          format: date
+          example: '2026-10-26'
+        estado:
+          $ref: '#/components/schemas/EstadoReserva'
+        observaciones:
+          type: string
+          nullable: true
+    FacturaCreate:
+      type: object
+      required:
+      - reserva_id
+      properties:
+        reserva_id:
+          type: integer
+          format: int64
+        notas:
+          type: string
+          nullable: true
+    FacturaUpdate:
+      type: object
+      required:
+      - estado
+      description: 'El front solo envia {estado}. No toca la reserva ni la habitacion: eso lo hace el front.'
+      properties:
+        estado:
+          $ref: '#/components/schemas/EstadoFactura'
+    Factura:
+      type: object
+      required:
+      - id
+      - reserva_id
+      - total
+      - estado
+      properties:
+        id:
+          type: integer
+          format: int64
+        reserva_id:
+          type: integer
+          format: int64
+        total:
+          type: number
+          format: double
+          description: 'Calculado por el backend: noches x precio_noche del tipo de la habitacion.'
+        estado:
+          $ref: '#/components/schemas/EstadoFactura'
+        notas:
+          type: string
+          nullable: true
+    MantenimientoCreate:
+      type: object
+      required:
+      - habitacion_id
+      - descripcion
+      properties:
+        habitacion_id:
+          type: integer
+          format: int64
+        usuario_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Debe ser un usuario con rol MANTENIMIENTO.
+        descripcion:
+          type: string
+    MantenimientoUpdate:
+      type: object
+      description: Parcial. habitacion_id no se puede cambiar. usuario_id null quita al tecnico. El front envia
+        {descripcion, usuario_id} al editar y {resuelto, fecha_fin} al marcar como lista.
+      properties:
+        descripcion:
+          type: string
+        usuario_id:
+          type: integer
+          format: int64
+          nullable: true
+        resuelto:
+          type: boolean
+        fecha_fin:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-10-26T14:30:00.000Z'
+    Mantenimiento:
+      type: object
+      required:
+      - id
+      - habitacion_id
+      - descripcion
+      - resuelto
+      properties:
+        id:
+          type: integer
+          format: int64
+        habitacion_id:
+          type: integer
+          format: int64
+        usuario_id:
+          type: integer
+          format: int64
+          nullable: true
+        descripcion:
+          type: string
+        resuelto:
+          type: boolean
+          default: false
+        fecha_fin:
+          type: string
+          format: date-time
+          nullable: true
